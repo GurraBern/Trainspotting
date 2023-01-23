@@ -10,12 +10,14 @@ import static TSim.TSimInterface.SWITCH_RIGHT;
 public class Lab1 {
   private Map<Point,Semaphore> semaMap = new HashMap<>();
   private Map<Point,Point> switchMap = new HashMap<>();
-  private HashMap<Point, Integer> switchDirections = new HashMap<>();
+  private HashMap<Point, Integer> switchDirectionsToA = new HashMap<>();
+  private HashMap<Point, Integer> switchDirectionsToB = new HashMap<>();
   private final HashSet<Point> stationAPositions = new HashSet<>();
   private final HashSet<Point> stationBPositions = new HashSet<>();
   private Semaphore semUpperLeft = new Semaphore(1);
-  private Semaphore semLower = new Semaphore(1);
   private Semaphore semUpperRight = new Semaphore(1);
+  private Semaphore semLower = new Semaphore(1);
+
 
   public enum Direction {
     ToA,
@@ -36,21 +38,46 @@ public class Lab1 {
   }
 
   private void loadSwitchDirections() {
-    switchDirections.put(new Point(15,8), SWITCH_LEFT);
-    switchDirections.put(new Point(15,7), SWITCH_RIGHT);
-    switchDirections.put(new Point(12,9), SWITCH_RIGHT);
+    switchDirectionsToA.put(new Point(15,8), SWITCH_LEFT);
+    switchDirectionsToA.put(new Point(15,7), SWITCH_RIGHT);
+    switchDirectionsToA.put(new Point(13,9), SWITCH_RIGHT);
+
+    switchDirectionsToB.put(new Point(15,7), SWITCH_RIGHT);
+    switchDirectionsToB.put(new Point(13,9), SWITCH_LEFT);
+    switchDirectionsToB.put(new Point(15,8), SWITCH_LEFT);
+
+    switchDirectionsToB.put(new Point(4,9), SWITCH_LEFT);
+    switchDirectionsToB.put(new Point(5,11), SWITCH_RIGHT);
+
   }
   private void loadSemaphores(){
     semaMap.put(new Point(6,7), semUpperLeft);
     semaMap.put(new Point(10,7), semUpperLeft);
     semaMap.put(new Point(10,8), semUpperLeft);
     semaMap.put(new Point(8,5), semUpperLeft);
+
+    semaMap.put(new Point(15,7), semUpperRight);
+    semaMap.put(new Point(15,8), semUpperRight);
+    semaMap.put(new Point(13,9), semUpperRight);
     semaMap.put(new Point(15,12), semUpperRight);
+
+    semaMap.put(new Point(6,9), semLower);
+    semaMap.put(new Point(6,10), semLower);
+    semaMap.put(new Point(5,11), semLower);
+    semaMap.put(new Point(3,13), semLower);
+
+
   }
   private void loadSwitches(){
     switchMap.put(new Point(15,7), new Point(17,7));
     switchMap.put(new Point(15,8), new Point(17,7));
-    switchMap.put(new Point(12,9), new Point(15,9));
+    switchMap.put(new Point(13,9), new Point(15,9));
+
+    switchMap.put(new Point(6,10), new Point(4,9));
+    switchMap.put(new Point(5,11), new Point(4,9));
+    switchMap.put(new Point(3,11), new Point(4,9));
+
+
   }
 
   private void loadStations(){
@@ -85,10 +112,20 @@ public class Lab1 {
 
     private void changeTrack(Point point){
       try{
+        Integer switchDirection = null;
         var switchPosition = switchMap.get(point);
-        var switchDirection = switchDirections.get(point);
-        if(switchPosition != null & switchDirection != null)
-          tsi.setSwitch(switchPosition.x,switchPosition.y, switchDirection);
+
+        if(currentDir.compareTo(Direction.ToA) == 0){
+          switchDirection = switchDirectionsToA.get(point);
+        } else if(currentDir.compareTo(Direction.ToB) == 0){
+          switchDirection = switchDirectionsToB.get(point);
+        }
+
+        if(switchPosition == null || switchDirection == null){
+          return;
+        }
+
+        tsi.setSwitch(switchPosition.x,switchPosition.y, switchDirection);
       } catch (CommandException e) {
         throw new RuntimeException(e);
       }
@@ -155,28 +192,30 @@ public class Lab1 {
       }
     }
 
-    private void acquireSection(Point point) throws InterruptedException {
+    private void acquireSection(Point point) {
       Semaphore tempSem = semaMap.get(point);
       if(tempSem == null){
         return;
       }
 
-      stopTrain();
       if(tempSem.tryAcquire()){
         changeTrack(point);
         holding = tempSem;
         incSpeed();
+        return;
       } else {
-        if(tempSem == holding){
-          holding = null;
-          tempSem.release();
-          incSpeed();
-        } else {
-          while (tempSem.availablePermits() == 0){
-            stopTrain();
-          }
-          incSpeed();
+        stopTrain();
+      }
+
+      if(tempSem == holding){
+        holding = null;
+        tempSem.release();
+        incSpeed();
+      } else {
+        while (tempSem.availablePermits() == 0){
+          stopTrain();
         }
+        incSpeed();
       }
     }
   }
