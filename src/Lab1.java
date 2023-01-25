@@ -10,6 +10,7 @@ import static TSim.TSimInterface.SWITCH_RIGHT;
 
 public class Lab1 {
   private Map<Point,Semaphore> semaMap = new HashMap<>();
+  private Map<Point,Semaphore> underSemMap = new HashMap<>();
   private Map<Point,Point> switchMap = new HashMap<>();
   private HashMap<Point, Integer> switchDirectionsToA = new HashMap<>();
   private HashMap<Point, Integer> switchDirectionsToB = new HashMap<>();
@@ -18,7 +19,10 @@ public class Lab1 {
   private Semaphore semUpperLeft = new Semaphore(1);
   private Semaphore semUpperRight = new Semaphore(1);
   private Semaphore semMiddle = new Semaphore(1);
-  private Semaphore semMiddleRight = new Semaphore(1);
+  private Semaphore semMiddleLeft = new Semaphore(1);
+  private Semaphore semMiddleLower = new Semaphore(1);
+  private Semaphore semBottomUpper = new Semaphore(1);
+  private Semaphore semBottomLower = new Semaphore(1);
 
 
   public enum Direction {
@@ -41,11 +45,22 @@ public class Lab1 {
 
   private void loadSwitchDirections() {
     //Sensor vilken direction
+
+
+
+
+
     switchDirectionsToA.put(new Point(13,9), SWITCH_RIGHT);
     switchDirectionsToA.put(new Point(15,7), SWITCH_LEFT);
 
+    switchDirectionsToA.put(new Point(18,9), SWITCH_LEFT);
+    switchDirectionsToA.put(new Point(18,9), SWITCH_LEFT);
+
     switchDirectionsToB.put(new Point(15,7), SWITCH_RIGHT);
     switchDirectionsToB.put(new Point(15,8), SWITCH_LEFT);
+
+
+    switchDirectionsToB.put(new Point(6,10), SWITCH_RIGHT);
 
 
   }
@@ -60,11 +75,23 @@ public class Lab1 {
     semaMap.put(new Point(13,9), semUpperRight);
     semaMap.put(new Point(13,10), semUpperRight);
 
-
     semaMap.put(new Point(18,9), semMiddle);
     semaMap.put(new Point(1,9), semMiddle);
 
 
+    semaMap.put(new Point(4,13), semMiddleLeft);
+    semaMap.put(new Point(5,11), semMiddleLeft);
+    semaMap.put(new Point(6,9), semMiddleLeft);
+
+    semaMap.put(new Point(6,10), semMiddleLeft);
+
+
+    underSemMap.put(new Point(18,9), semMiddleLower);
+    underSemMap.put(new Point(1,9), semMiddleLower);
+
+
+    semaMap.put(new Point(1,9), semBottomUpper);
+    underSemMap.put(new Point(1,9), semBottomLower);
 
   }
   private void loadSwitches(){
@@ -72,6 +99,8 @@ public class Lab1 {
     switchMap.put(new Point(15,7), new Point(17,7));
     switchMap.put(new Point(15,8), new Point(17,7));
     switchMap.put(new Point(18,9), new Point(15,9));
+
+    switchMap.put(new Point(6,10), new Point(4,9));
 
   }
 
@@ -105,7 +134,7 @@ public class Lab1 {
       }
     }
 
-    private void changeTrack(Point point){
+    private void changeTrack(Point point, boolean taken){
       try{
         Integer switchDirection = null;
         var switchPosition = switchMap.get(point);
@@ -113,6 +142,10 @@ public class Lab1 {
         if(currentDir.compareTo(Direction.ToA) == 0){
           switchDirection = switchDirectionsToA.get(point);
         } else if(currentDir.compareTo(Direction.ToB) == 0){
+          switchDirection = switchDirectionsToB.get(point);
+        }
+
+        if(taken){
           switchDirection = switchDirectionsToB.get(point);
         }
 
@@ -192,15 +225,68 @@ public class Lab1 {
         return;
       }
 
+      /*if(underSemMap.containsKey(point)){
+
+      }*/
+
       if(holding.contains(tempSem)){
         holding.remove(0);
         tempSem.release();
       } else {
         stopTrain();
-        tempSem.acquire();
+
+        if(tempSem.tryAcquire()){
+          changeTrack(point, false);
+          incSpeed();
+          holding.add(tempSem);
+        } else{
+
+          if(underSemMap.containsKey(point)){
+            //SwitchDown opposite
+            changeTrack(point, true);
+            incSpeed();
+            holding.add(tempSem);
+          } else {
+            tempSem.acquire();
+            changeTrack(point,false);
+            incSpeed();
+            holding.add(tempSem);
+          }
+
+          /*tempSem.acquire();
+          changeTrack(point);
+          incSpeed();
+          holding.add(tempSem);
+
+           */
+        }
+
+        /*tempSem.acquire();
         changeTrack(point);
         incSpeed();
         holding.add(tempSem);
+
+         */
+
+        /*if(underSemMap.containsKey(point)){
+            //SwitchDown opposite
+            changeTrack(point);
+            incSpeed();
+            holding.add(tempSem);
+        } else {
+          tempSem.acquire();
+          incSpeed();
+        }
+
+         */
+
+
+
+
+        /*tempSem.acquire();
+        changeTrack(point);
+        incSpeed();
+        holding.add(tempSem);*/
       }
     }
   }
