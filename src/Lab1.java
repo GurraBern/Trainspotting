@@ -1,5 +1,6 @@
 import TSim.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -16,7 +17,8 @@ public class Lab1 {
   private final HashSet<Point> stationBPositions = new HashSet<>();
   private Semaphore semUpperLeft = new Semaphore(1);
   private Semaphore semUpperRight = new Semaphore(1);
-  private Semaphore semLower = new Semaphore(1);
+  private Semaphore semMiddle = new Semaphore(1);
+  private Semaphore semMiddleRight = new Semaphore(1);
 
 
   public enum Direction {
@@ -38,16 +40,13 @@ public class Lab1 {
   }
 
   private void loadSwitchDirections() {
-    switchDirectionsToA.put(new Point(15,8), SWITCH_LEFT);
-    switchDirectionsToA.put(new Point(15,7), SWITCH_RIGHT);
+    //Sensor vilken direction
     switchDirectionsToA.put(new Point(13,9), SWITCH_RIGHT);
+    switchDirectionsToA.put(new Point(15,7), SWITCH_LEFT);
 
     switchDirectionsToB.put(new Point(15,7), SWITCH_RIGHT);
-    switchDirectionsToB.put(new Point(13,9), SWITCH_LEFT);
     switchDirectionsToB.put(new Point(15,8), SWITCH_LEFT);
 
-    switchDirectionsToB.put(new Point(4,9), SWITCH_LEFT);
-    switchDirectionsToB.put(new Point(5,11), SWITCH_RIGHT);
 
   }
   private void loadSemaphores(){
@@ -59,24 +58,20 @@ public class Lab1 {
     semaMap.put(new Point(15,7), semUpperRight);
     semaMap.put(new Point(15,8), semUpperRight);
     semaMap.put(new Point(13,9), semUpperRight);
-    semaMap.put(new Point(15,12), semUpperRight);
+    semaMap.put(new Point(13,10), semUpperRight);
 
-    semaMap.put(new Point(6,9), semLower);
-    semaMap.put(new Point(6,10), semLower);
-    semaMap.put(new Point(5,11), semLower);
-    semaMap.put(new Point(3,13), semLower);
+
+    semaMap.put(new Point(18,9), semMiddle);
+    semaMap.put(new Point(1,9), semMiddle);
+
 
 
   }
   private void loadSwitches(){
+    switchMap.put(new Point(13,9), new Point(15,9));
     switchMap.put(new Point(15,7), new Point(17,7));
     switchMap.put(new Point(15,8), new Point(17,7));
-    switchMap.put(new Point(13,9), new Point(15,9));
-
-    switchMap.put(new Point(6,10), new Point(4,9));
-    switchMap.put(new Point(5,11), new Point(4,9));
-    switchMap.put(new Point(3,11), new Point(4,9));
-
+    switchMap.put(new Point(18,9), new Point(15,9));
 
   }
 
@@ -92,7 +87,7 @@ public class Lab1 {
     private int speed;
     private final int maxSpeed = 20;
     private TSimInterface tsi;
-    public Semaphore holding;//todo may have to hold multiple on upper right critical point
+    public ArrayList<Semaphore> holding = new ArrayList();//todo may have to hold multiple on upper right critical point
     private Direction currentDir;
     public Train(int id, int speed, Direction direction) {
       this.id = id;
@@ -183,7 +178,6 @@ public class Lab1 {
           Point sensorPoint = new Point(sensorEvent.getXpos(), sensorEvent.getYpos());
           if (sensorEvent.getStatus() == SensorEvent.ACTIVE){
             reachedStation(sensorPoint);
-            changeTrack(sensorPoint);
             acquireSection(sensorPoint);
           }
         }
@@ -192,30 +186,21 @@ public class Lab1 {
       }
     }
 
-    private void acquireSection(Point point) {
+    private void acquireSection(Point point) throws InterruptedException {
       Semaphore tempSem = semaMap.get(point);
       if(tempSem == null){
         return;
       }
 
-      if(tempSem.tryAcquire()){
-        changeTrack(point);
-        holding = tempSem;
-        incSpeed();
-        return;
+      if(holding.contains(tempSem)){
+        holding.remove(0);
+        tempSem.release();
       } else {
         stopTrain();
-      }
-
-      if(tempSem == holding){
-        holding = null;
-        tempSem.release();
+        tempSem.acquire();
+        changeTrack(point);
         incSpeed();
-      } else {
-        while (tempSem.availablePermits() == 0){
-          stopTrain();
-        }
-        incSpeed();
+        holding.add(tempSem);
       }
     }
   }
