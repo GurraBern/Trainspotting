@@ -35,36 +35,32 @@ public class Lab1 {
     loadSwitches();
     loadSwitchDirections();
     loadStations();
-    Train t1 = new Train(1, speed1, Direction.ToB);
-    Train t2 = new Train(2, speed2, Direction.ToA);
+    Train t1 = new Train(1, 0, Direction.ToB);
+    Train t2 = new Train(2, 5, Direction.ToA);
     Thread thread1 = new Thread(t1);
     Thread thread2 = new Thread(t2);
     thread1.start();
     thread2.start();
   }
 
+  //Sensor vilken direction
   private void loadSwitchDirections() {
-    //Sensor vilken direction
-
-
-
-
-
     switchDirectionsToA.put(new Point(13,9), SWITCH_RIGHT);
     switchDirectionsToA.put(new Point(15,7), SWITCH_LEFT);
 
-    switchDirectionsToA.put(new Point(18,9), SWITCH_LEFT);
-    switchDirectionsToA.put(new Point(18,9), SWITCH_LEFT);
+    switchDirectionsToB.put(new Point(18,9), SWITCH_RIGHT);
+    //switchDirectionsToA.put(new Point(18,9), SWITCH_RIGHT);
 
     switchDirectionsToB.put(new Point(15,7), SWITCH_RIGHT);
     switchDirectionsToB.put(new Point(15,8), SWITCH_LEFT);
 
-
     switchDirectionsToB.put(new Point(6,10), SWITCH_RIGHT);
-
-
   }
   private void loadSemaphores(){
+
+    //semaMap.put(new Point(14,3), semUpperLeft);
+    //semaMap.put(new Point(14,5), semUpperLeft);
+
     semaMap.put(new Point(6,7), semUpperLeft);
     semaMap.put(new Point(10,7), semUpperLeft);
     semaMap.put(new Point(10,8), semUpperLeft);
@@ -79,19 +75,20 @@ public class Lab1 {
     semaMap.put(new Point(1,9), semMiddle);
 
 
-    semaMap.put(new Point(4,13), semMiddleLeft);
-    semaMap.put(new Point(5,11), semMiddleLeft);
-    semaMap.put(new Point(6,9), semMiddleLeft);
-
-    semaMap.put(new Point(6,10), semMiddleLeft);
-
-
     underSemMap.put(new Point(18,9), semMiddleLower);
     underSemMap.put(new Point(1,9), semMiddleLower);
 
 
-    semaMap.put(new Point(1,9), semBottomUpper);
-    underSemMap.put(new Point(1,9), semBottomLower);
+    semaMap.put(new Point(4,13), semMiddleLeft);
+    semaMap.put(new Point(5,11), semMiddleLeft);
+    semaMap.put(new Point(6,9), semMiddleLeft);
+    semaMap.put(new Point(6,10), semMiddleLeft);
+
+
+    semaMap.put(new Point(14,11), semBottomUpper);
+    //semaMap.put(new Point(1,9), semBottomUpper);
+    //underSemMap.put(new Point(1,9), semBottomLower);
+    underSemMap.put(new Point(14,13), semBottomLower);
 
   }
   private void loadSwitches(){
@@ -101,14 +98,15 @@ public class Lab1 {
     switchMap.put(new Point(18,9), new Point(15,9));
 
     switchMap.put(new Point(6,10), new Point(4,9));
+    switchMap.put(new Point(1,9), new Point(4,9));
 
   }
 
   private void loadStations(){
-    stationAPositions.add(new Point(15, 5));
-    stationAPositions.add(new Point(15, 3));
-    stationBPositions.add(new Point(15, 11));
-    stationBPositions.add(new Point(15, 13));
+    stationAPositions.add(new Point(14, 5));
+    stationAPositions.add(new Point(14, 3));
+    stationBPositions.add(new Point(14,11));
+    stationBPositions.add(new Point(14, 13));
   }
 
   public class Train implements Runnable {
@@ -134,6 +132,7 @@ public class Lab1 {
       }
     }
 
+    //TODO fix
     private void changeTrack(Point point, boolean taken){
       try{
         Integer switchDirection = null;
@@ -141,12 +140,16 @@ public class Lab1 {
 
         if(currentDir.compareTo(Direction.ToA) == 0){
           switchDirection = switchDirectionsToA.get(point);
+
+          if(taken){
+            switchDirection = SWITCH_LEFT;
+          }
         } else if(currentDir.compareTo(Direction.ToB) == 0){
           switchDirection = switchDirectionsToB.get(point);
-        }
 
-        if(taken){
-          switchDirection = switchDirectionsToB.get(point);
+          if(taken){
+            switchDirection = SWITCH_LEFT;
+          }
         }
 
         if(switchPosition == null || switchDirection == null){
@@ -224,12 +227,10 @@ public class Lab1 {
       if(tempSem == null){
         return;
       }
-
-      /*if(underSemMap.containsKey(point)){
-
-      }*/
-
+      //System.out.println(holding);
+      //System.out.println(tempSem);
       if(holding.contains(tempSem)){
+        System.out.println(holding.size());
         holding.remove(0);
         tempSem.release();
       } else {
@@ -237,56 +238,18 @@ public class Lab1 {
 
         if(tempSem.tryAcquire()){
           changeTrack(point, false);
-          incSpeed();
-          holding.add(tempSem);
         } else{
-
           if(underSemMap.containsKey(point)){
-            //SwitchDown opposite
             changeTrack(point, true);
-            incSpeed();
-            holding.add(tempSem);
           } else {
             tempSem.acquire();
             changeTrack(point,false);
-            incSpeed();
-            holding.add(tempSem);
           }
-
-          /*tempSem.acquire();
-          changeTrack(point);
-          incSpeed();
-          holding.add(tempSem);
-
-           */
         }
-
-        /*tempSem.acquire();
-        changeTrack(point);
         incSpeed();
+//        System.out.println("newly added"+tempSem);
+
         holding.add(tempSem);
-
-         */
-
-        /*if(underSemMap.containsKey(point)){
-            //SwitchDown opposite
-            changeTrack(point);
-            incSpeed();
-            holding.add(tempSem);
-        } else {
-          tempSem.acquire();
-          incSpeed();
-        }
-
-         */
-
-
-
-
-        /*tempSem.acquire();
-        changeTrack(point);
-        incSpeed();
-        holding.add(tempSem);*/
       }
     }
   }
