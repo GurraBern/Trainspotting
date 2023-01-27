@@ -31,7 +31,7 @@ public class Lab1 {
     loadStations();
     loadActivationDirection();
     Train t1 = new Train(1, 15, Direction.ToB);
-    Train t2 = new Train(2,  15, Direction.ToA);
+    Train t2 = new Train(2,  5, Direction.ToA);
     Thread thread1 = new Thread(t1);
     Thread thread2 = new Thread(t2);
     thread1.start();
@@ -46,7 +46,7 @@ public class Lab1 {
   //Sensor vilken direction
   private void loadSwitchDirections() {
     switchDirectionsToA.put(new Point(13,9), SWITCH_RIGHT);
-    switchDirectionsToA.put(new Point(15,7), SWITCH_LEFT);
+    switchDirectionsToB.put(new Point(15,7), SWITCH_LEFT);
 
     switchDirectionsToB.put(new Point(18,9), SWITCH_RIGHT);
     switchDirectionsToA.put(new Point(18,9), SWITCH_LEFT);
@@ -56,7 +56,7 @@ public class Lab1 {
 
     switchDirectionsToB.put(new Point(6,10), SWITCH_RIGHT);
 
-    switchDirectionsToA.put(new Point(1,11), SWITCH_RIGHT);
+    //switchDirectionsToA.put(new Point(1,11), SWITCH_RIGHT);       //gör en taken map istället!!! 1,11 triggas när man ska iväg så att tåget står på rälsen exception!!
     switchDirectionsToB.put(new Point(1,11), SWITCH_LEFT);
 
     switchDirectionsToA.put(new Point(6,11), SWITCH_LEFT);
@@ -67,6 +67,15 @@ public class Lab1 {
 
     switchDirectionsToA.put(new Point(19,8), SWITCH_RIGHT);
     switchDirectionsToB.put(new Point(19,8), SWITCH_LEFT);
+
+    switchDirectionsToA.put(new Point(6,9), SWITCH_RIGHT);
+    switchDirectionsToB.put(new Point(6,9), SWITCH_LEFT);
+
+     switchDirectionsToA.put(new Point(13,10), SWITCH_LEFT);
+     switchDirectionsToB.put(new Point(13,10), SWITCH_RIGHT);
+
+      switchDirectionsToA.put(new Point(4,13), SWITCH_RIGHT);
+      switchDirectionsToB.put(new Point(4,13), SWITCH_LEFT);
   }
   private void loadSemaphores(){
     for(int i = 0; i < semaphores.length; i++){
@@ -94,6 +103,7 @@ public class Lab1 {
     semaMap.put(new Point(19,8), semaphores[5]);//5 semUpperAbove
     semaMap.put(new Point(14,3), semaphores[5]);//5 semUpperAbove
     underSemMap.put(new Point(19,8), true);
+    underSemMap.put(new Point(1,11), true);
   }
 
   private void loadSwitches(){
@@ -107,6 +117,8 @@ public class Lab1 {
     switchMap.put(new Point(1,11), new Point(3,11));
     switchMap.put(new Point(6,11), new Point(3,11));
     switchMap.put(new Point(4,13), new Point(3,11));
+    switchMap.put(new Point(6,9), new Point(4,9));
+    switchMap.put(new Point(13,10), new Point(15,9));
   }
 
   private void loadStations(){
@@ -201,9 +213,7 @@ public class Lab1 {
         flipDirection();
         Thread.sleep(Math.abs(1000 + 20*Math.abs(speed)));
         reverseSpeed();
-      } catch (CommandException e) {
-        throw new RuntimeException(e);
-      } catch (InterruptedException e) {
+      } catch (CommandException | InterruptedException e) {
         throw new RuntimeException(e);
       }
     }
@@ -214,7 +224,7 @@ public class Lab1 {
         while (true) {
           SensorEvent sensorEvent = tsi.getSensor(id);
           Point sensorPoint = new Point(sensorEvent.getXpos(), sensorEvent.getYpos());
-          if (sensorEvent.getStatus() == SensorEvent.ACTIVE && activationDirection.get(sensorPoint) == currentDir || sensorEvent.getStatus() == SensorEvent.ACTIVE && !activationDirection.containsKey(sensorPoint)){
+          if (sensorEvent.getStatus() == SensorEvent.ACTIVE){
             reachedStation(sensorPoint);
             acquireSection(sensorPoint);
           }
@@ -234,24 +244,27 @@ public class Lab1 {
         if(!stationAPositions.contains(point) && !stationBPositions.contains(point)){
           holding.remove(holding.indexOf(tempSem));
           tempSem.release();
-
           System.out.println("train"+id+ ": removed index: "+ removeMethod(tempSem));
         }
       } else {
-        stopTrain();
-
-        if(tempSem.tryAcquire()){
-          changeTrack(point, false);
-          holding.add(tempSem);
-          System.out.println( "train"+id + ": acquired index: "+ removeMethod(tempSem));
-        } else{
-          if(underSemMap.containsKey(point)){
-            changeTrack(point, true);
-          } else {
-            tempSem.acquire();
-            changeTrack(point,false);
+        //den acquirear middle[1] åt båda hållen
+        //vi behöver separarera så att det bara sker från ett håll
+        if(!activationDirection.containsKey(point) || activationDirection.containsKey(point) && activationDirection.get(point).equals(currentDir)){
+           stopTrain();
+          if(tempSem.tryAcquire()){
+            changeTrack(point, false);
             holding.add(tempSem);
-            System.out.println( "train"+id + ": acquired index: "+ removeMethod(tempSem));
+
+            System.out.println( "train" + id + ": acquired index: " + removeMethod(tempSem));
+          } else{
+            if(underSemMap.containsKey(point)){
+              changeTrack(point, true);
+            } else {
+              tempSem.acquire();
+              changeTrack(point,false);
+              holding.add(tempSem);
+              System.out.println( "train"+id + ": acquired index: "+ removeMethod(tempSem));
+            }
           }
         }
         tsi.setSpeed(id, Math.min(speed, maxSpeed));
