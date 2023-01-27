@@ -14,6 +14,7 @@ public class Lab1 {
   private Map<Point,Point> switchMap = new HashMap<>();
   private HashMap<Point, Integer> switchDirectionsToA = new HashMap<>();
   private HashMap<Point, Integer> switchDirectionsToB = new HashMap<>();
+  private HashMap<Point, Direction> activationDirection = new HashMap<>();
   private final HashSet<Point> stationAPositions = new HashSet<>();
   private final HashSet<Point> stationBPositions = new HashSet<>();
   private Semaphore[] semaphores = new Semaphore[6];
@@ -28,12 +29,18 @@ public class Lab1 {
     loadSwitches();
     loadSwitchDirections();
     loadStations();
+    loadActivationDirection();
     Train t1 = new Train(1, 15, Direction.ToB);
     Train t2 = new Train(2,  15, Direction.ToA);
     Thread thread1 = new Thread(t1);
     Thread thread2 = new Thread(t2);
     thread1.start();
     thread2.start();
+  }
+
+  private void loadActivationDirection(){
+    activationDirection.put(new Point(1,9), Direction.ToA);
+    activationDirection.put(new Point(18,9), Direction.ToB);
   }
 
   //Sensor vilken direction
@@ -49,8 +56,8 @@ public class Lab1 {
 
     switchDirectionsToB.put(new Point(6,10), SWITCH_RIGHT);
 
-    switchDirectionsToA.put(new Point(1,10), SWITCH_RIGHT);
-    switchDirectionsToB.put(new Point(1,10), SWITCH_LEFT);
+    switchDirectionsToA.put(new Point(1,11), SWITCH_RIGHT);
+    switchDirectionsToB.put(new Point(1,11), SWITCH_LEFT);
 
     switchDirectionsToA.put(new Point(6,11), SWITCH_LEFT);
     switchDirectionsToB.put(new Point(6,11), SWITCH_RIGHT);
@@ -67,7 +74,7 @@ public class Lab1 {
     }
 
     semaMap.put(new Point(14,11), semaphores[0]);//0 semBottomUpper
-    semaMap.put(new Point(1,10), semaphores[0]);//0 semBottomUpper
+    semaMap.put(new Point(1,11), semaphores[0]);//0 semBottomUpper
     semaMap.put(new Point(1,9), semaphores[1]);//1 semMiddle
     semaMap.put(new Point(18,9), semaphores[1]);//1 semMiddle
     underSemMap.put(new Point(1,9), true);
@@ -97,7 +104,7 @@ public class Lab1 {
     switchMap.put(new Point(19,8), new Point(17,7));
     switchMap.put(new Point(6,10), new Point(4,9));
     switchMap.put(new Point(1,9), new Point(4,9));
-    switchMap.put(new Point(1,10), new Point(3,11));
+    switchMap.put(new Point(1,11), new Point(3,11));
     switchMap.put(new Point(6,11), new Point(3,11));
     switchMap.put(new Point(4,13), new Point(3,11));
   }
@@ -116,6 +123,7 @@ public class Lab1 {
     private TSimInterface tsi;
     public ArrayList<Semaphore> holding = new ArrayList();
     private Direction currentDir;
+
     public Train(int id, int speed, Direction direction) {
       this.id = id;
       this.speed = speed;
@@ -206,8 +214,7 @@ public class Lab1 {
         while (true) {
           SensorEvent sensorEvent = tsi.getSensor(id);
           Point sensorPoint = new Point(sensorEvent.getXpos(), sensorEvent.getYpos());
-          //System.out.println(holding.size());
-          if (sensorEvent.getStatus() == SensorEvent.ACTIVE){
+          if (sensorEvent.getStatus() == SensorEvent.ACTIVE && activationDirection.get(sensorPoint) == currentDir || sensorEvent.getStatus() == SensorEvent.ACTIVE && !activationDirection.containsKey(sensorPoint)){
             reachedStation(sensorPoint);
             acquireSection(sensorPoint);
           }
@@ -223,8 +230,6 @@ public class Lab1 {
         return;
       }
 
-
-
       if(holding.contains(tempSem)){
         if(!stationAPositions.contains(point) && !stationBPositions.contains(point)){
           holding.remove(holding.indexOf(tempSem));
@@ -237,19 +242,19 @@ public class Lab1 {
 
         if(tempSem.tryAcquire()){
           changeTrack(point, false);
+          holding.add(tempSem);
+          System.out.println( "train"+id + ": acquired index: "+ removeMethod(tempSem));
         } else{
           if(underSemMap.containsKey(point)){
             changeTrack(point, true);
           } else {
             tempSem.acquire();
             changeTrack(point,false);
+            holding.add(tempSem);
+            System.out.println( "train"+id + ": acquired index: "+ removeMethod(tempSem));
           }
         }
         tsi.setSpeed(id, Math.min(speed, maxSpeed));
-        holding.add(tempSem);
-
-        if(id == 2)
-          System.out.println( "train"+id + ": acquired index: "+ removeMethod(tempSem));
       }
     }
 
