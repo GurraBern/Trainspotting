@@ -16,13 +16,7 @@ public class Lab1 {
   private HashMap<Point, Integer> switchDirectionsToB = new HashMap<>();
   private final HashSet<Point> stationAPositions = new HashSet<>();
   private final HashSet<Point> stationBPositions = new HashSet<>();
-  private Semaphore semUpperLeft = new Semaphore(1);
-  private Semaphore semUpperRight = new Semaphore(1);
-  private Semaphore semMiddle = new Semaphore(1);
-  private Semaphore semMiddleLeft = new Semaphore(1);
-  private Semaphore semBottomUpper = new Semaphore(1);
-  private Semaphore semUpperAbove = new Semaphore(1);
-
+  private Semaphore[] semaphores = new Semaphore[6];
 
   public enum Direction {
     ToA,
@@ -68,56 +62,51 @@ public class Lab1 {
     switchDirectionsToB.put(new Point(19,8), SWITCH_LEFT);
   }
   private void loadSemaphores(){
-    semaMap.put(new Point(14,11), semBottomUpper);//Claim
-    semaMap.put(new Point(1,10), semBottomUpper);//Unclaim
+    for(int i = 0; i < semaphores.length; i++){
+      semaphores[i] =new Semaphore(1);
+    }
 
-    underSemMap.put(new Point(18,9), true);//Unclaim
-    underSemMap.put(new Point(1,9), true);//Claim
-
-    semaMap.put(new Point(1,9), semMiddle);//Claim
-    semaMap.put(new Point(18,9), semMiddle);//Unclaim
-
-    semaMap.put(new Point(6,11), semMiddleLeft);//Claim
-    semaMap.put(new Point(6,9), semMiddleLeft);//Unclaim
-    semaMap.put(new Point(6,10), semMiddleLeft);//Claim
-    semaMap.put(new Point(4,13), semMiddleLeft);//Claim
-
-    semaMap.put(new Point(13,10), semUpperRight);//Claim
-    semaMap.put(new Point(13,9), semUpperRight);//Claim
-    semaMap.put(new Point(15,8), semUpperRight);//Unclaim
-    semaMap.put(new Point(15,7), semUpperRight);//Claim
-
-    semaMap.put(new Point(10,8), semUpperLeft);//Claim
-    semaMap.put(new Point(8,5), semUpperLeft);//Unclaim
-
-    semaMap.put(new Point(10,7), semUpperLeft);//Claim
-    semaMap.put(new Point(6,7), semUpperLeft);//
-
-    semaMap.put(new Point(19,8), semUpperAbove);//Claim
-    semaMap.put(new Point(14,3), semUpperAbove);//Unclaim
-    underSemMap.put(new Point(19,8), true);//Unclaim
+    semaMap.put(new Point(14,11), semaphores[0]);//0 semBottomUpper
+    semaMap.put(new Point(1,10), semaphores[0]);//0 semBottomUpper
+    semaMap.put(new Point(1,9), semaphores[1]);//1 semMiddle
+    semaMap.put(new Point(18,9), semaphores[1]);//1 semMiddle
+    underSemMap.put(new Point(1,9), true);
+    underSemMap.put(new Point(18,9), true);
+    semaMap.put(new Point(6,11), semaphores[2]);//2 semMiddleLeft
+    semaMap.put(new Point(6,9), semaphores[2]);//2 semMiddleLeft
+    semaMap.put(new Point(6,10), semaphores[2]);//2 semMiddleLeft
+    semaMap.put(new Point(4,13), semaphores[2]);//2 semMiddleLeft
+    semaMap.put(new Point(13,10), semaphores[3]);//3 semUpperRight
+    semaMap.put(new Point(13,9), semaphores[3]);//3 semUpperRight
+    semaMap.put(new Point(15,8), semaphores[3]);//3 semUpperRight
+    semaMap.put(new Point(15,7), semaphores[3]);//3 semUpperRight
+    semaMap.put(new Point(10,8), semaphores[4]);//4 semUpperLeft
+    semaMap.put(new Point(8,5), semaphores[4]);//4 semUpperLeft
+    semaMap.put(new Point(10,7), semaphores[4]);//4 semUpperLeft
+    semaMap.put(new Point(6,7), semaphores[4]);//4 semUpperLeft
+    semaMap.put(new Point(19,8), semaphores[5]);//5 semUpperAbove
+    semaMap.put(new Point(14,3), semaphores[5]);//5 semUpperAbove
+    underSemMap.put(new Point(19,8), true);
   }
+
   private void loadSwitches(){
     switchMap.put(new Point(13,9), new Point(15,9));
+    switchMap.put(new Point(18,9), new Point(15,9));
     switchMap.put(new Point(15,7), new Point(17,7));
     switchMap.put(new Point(15,8), new Point(17,7));
-    switchMap.put(new Point(18,9), new Point(15,9));
-
+    switchMap.put(new Point(19,8), new Point(17,7));
     switchMap.put(new Point(6,10), new Point(4,9));
     switchMap.put(new Point(1,9), new Point(4,9));
-
     switchMap.put(new Point(1,10), new Point(3,11));
     switchMap.put(new Point(6,11), new Point(3,11));
     switchMap.put(new Point(4,13), new Point(3,11));
-
-    switchMap.put(new Point(19,8), new Point(17,7));
   }
 
   private void loadStations(){
-    stationAPositions.add(new Point(14, 5));
-    stationAPositions.add(new Point(14, 3));
+    stationAPositions.add(new Point(14,5));
+    stationAPositions.add(new Point(14,3));
     stationBPositions.add(new Point(14,11));
-    stationBPositions.add(new Point(14, 13));
+    stationBPositions.add(new Point(14,13));
   }
 
   public class Train implements Runnable {
@@ -175,14 +164,6 @@ public class Lab1 {
       }
     }
 
-    public void incSpeed() {
-      try {
-        tsi.setSpeed(id, Math.min(speed, maxSpeed));
-      } catch (CommandException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
     private void reverseSpeed() {
       try {
         speed = -speed;
@@ -225,7 +206,7 @@ public class Lab1 {
         while (true) {
           SensorEvent sensorEvent = tsi.getSensor(id);
           Point sensorPoint = new Point(sensorEvent.getXpos(), sensorEvent.getYpos());
-          System.out.println(holding.size());
+          //System.out.println(holding.size());
           if (sensorEvent.getStatus() == SensorEvent.ACTIVE){
             reachedStation(sensorPoint);
             acquireSection(sensorPoint);
@@ -242,10 +223,14 @@ public class Lab1 {
         return;
       }
 
+
+
       if(holding.contains(tempSem)){
-        if(!stationAPositions.contains(point) & !stationBPositions.contains(point)){
+        if(!stationAPositions.contains(point) && !stationBPositions.contains(point)){
           holding.remove(holding.indexOf(tempSem));
           tempSem.release();
+
+          System.out.println("train"+id+ ": removed index: "+ removeMethod(tempSem));
         }
       } else {
         stopTrain();
@@ -262,7 +247,19 @@ public class Lab1 {
         }
         tsi.setSpeed(id, Math.min(speed, maxSpeed));
         holding.add(tempSem);
+
+        if(id == 2)
+          System.out.println( "train"+id + ": acquired index: "+ removeMethod(tempSem));
       }
+    }
+
+    private int removeMethod(Semaphore sem){
+      for(int i = 0; i < semaphores.length; i++){
+        if(sem.equals(semaphores[i])){
+          return i;
+        }
+      }
+      return -1;
     }
   }
 }
