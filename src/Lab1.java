@@ -20,9 +20,7 @@ public class Lab1 {
   private Semaphore semUpperRight = new Semaphore(1);
   private Semaphore semMiddle = new Semaphore(1);
   private Semaphore semMiddleLeft = new Semaphore(1);
-  //private Semaphore semMiddleLower = new Semaphore(1);
   private Semaphore semBottomUpper = new Semaphore(1);
-  private Semaphore semBottomLower = new Semaphore(1);
   private Semaphore semUpperAbove = new Semaphore(1);
 
 
@@ -60,15 +58,8 @@ public class Lab1 {
     switchDirectionsToA.put(new Point(1,10), SWITCH_RIGHT);
     switchDirectionsToB.put(new Point(1,10), SWITCH_LEFT);
 
-    switchDirectionsToA.put(new Point(5,11), SWITCH_LEFT);
-    switchDirectionsToB.put(new Point(5,11), SWITCH_RIGHT);
-    //switchDirectionsToB.put(new Point(5,11), SWITCH_LEFT);
-    /*switchDirectionsToA.put(new Point(6,11), SWITCH_LEFT);
-    switchDirectionsToB.put(new Point(6,11), SWITCH_LEFT);
-
-     */
-
-
+    switchDirectionsToA.put(new Point(6,11), SWITCH_LEFT);
+    switchDirectionsToB.put(new Point(6,11), SWITCH_RIGHT);
 
     switchDirectionsToA.put(new Point(1,9), SWITCH_LEFT);
     switchDirectionsToB.put(new Point(1,9), SWITCH_RIGHT);
@@ -88,7 +79,7 @@ public class Lab1 {
     underSemMap.put(new Point(1,9), true);//Claim
     underSemMap.put(new Point(18,9), true);//Unclaim
 
-    semaMap.put(new Point(5,11), semMiddleLeft);//Claim
+    semaMap.put(new Point(6,11), semMiddleLeft);//Claim
     semaMap.put(new Point(6,9), semMiddleLeft);//Unclaim
     semaMap.put(new Point(6,10), semMiddleLeft);//Claim
     semaMap.put(new Point(4,13), semMiddleLeft);//Claim
@@ -97,7 +88,6 @@ public class Lab1 {
     semaMap.put(new Point(13,9), semUpperRight);//Claim
     semaMap.put(new Point(15,8), semUpperRight);//Unclaim
     semaMap.put(new Point(15,7), semUpperRight);//Claim
-    semaMap.put(new Point(13,9), semUpperRight);//Unclaim
 
     semaMap.put(new Point(10,8), semUpperLeft);//Claim
     semaMap.put(new Point(8,5), semUpperLeft);//Unclaim
@@ -119,7 +109,7 @@ public class Lab1 {
     switchMap.put(new Point(1,9), new Point(4,9));
 
     switchMap.put(new Point(1,10), new Point(3,11));
-    switchMap.put(new Point(5,11), new Point(3,11));
+    switchMap.put(new Point(6,11), new Point(3,11));
     switchMap.put(new Point(4,13), new Point(3,11));
     //switchMap.put(new Point(6,11), new Point(3,11));
 
@@ -237,7 +227,7 @@ public class Lab1 {
           SensorEvent sensorEvent = tsi.getSensor(id);
           Point sensorPoint = new Point(sensorEvent.getXpos(), sensorEvent.getYpos());
           System.out.println(holding.size());
-
+          System.out.println(currentDir);
           if (sensorEvent.getStatus() == SensorEvent.ACTIVE){
             reachedStation(sensorPoint);
             acquireSection(sensorPoint);
@@ -255,8 +245,12 @@ public class Lab1 {
       }
 
       if(holding.contains(tempSem)){
+        if(stationAPositions.contains(point) || stationBPositions.contains(point)){
+          return;
+        }
         System.out.println("removed");
-        holding.remove(0);
+
+        holding.remove(holding.indexOf(tempSem));
         tempSem.release();
       } else {
         stopTrain();
