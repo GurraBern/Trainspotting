@@ -34,8 +34,8 @@ public class Lab1 {
     loadSwitches();
     loadSwitchDirections();
     loadStations();
-    Train t1 = new Train(1, speed1, Direction.ToB);
-    Train t2 = new Train(2,  speed2, Direction.ToA);
+    Train t1 = new Train(1, 15, Direction.ToB);
+    Train t2 = new Train(2,  15, Direction.ToA);
     Thread thread1 = new Thread(t1);
     Thread thread2 = new Thread(t2);
     thread1.start();
@@ -71,13 +71,14 @@ public class Lab1 {
     semaMap.put(new Point(14,11), semBottomUpper);//Claim
     semaMap.put(new Point(1,10), semBottomUpper);//Unclaim
 
-    underSemMap.put(new Point(1,10), true);//Claim
+    //underSemMap.put(new Point(1,10), true);//Claim
+    underSemMap.put(new Point(18,9), true);//Unclaim
+    underSemMap.put(new Point(1,9), true);//Claim
+
 
     semaMap.put(new Point(1,9), semMiddle);//Claim
     semaMap.put(new Point(18,9), semMiddle);//Unclaim
 
-    underSemMap.put(new Point(1,9), true);//Claim
-    underSemMap.put(new Point(18,9), true);//Unclaim
 
     semaMap.put(new Point(6,11), semMiddleLeft);//Claim
     semaMap.put(new Point(6,9), semMiddleLeft);//Unclaim
@@ -136,7 +137,11 @@ public class Lab1 {
       this.speed = speed;
       this.currentDir = direction;
       this.tsi = TSimInterface.getInstance();
-      incSpeed();
+      try{
+        tsi.setSpeed(id, Math.min(speed, maxSpeed));
+      } catch (CommandException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     private void flipDirection(){
@@ -178,7 +183,7 @@ public class Lab1 {
 
     public void incSpeed() {
       try {
-        tsi.setSpeed(id, speed);
+        tsi.setSpeed(id, Math.min(speed, maxSpeed));
       } catch (CommandException e) {
         throw new RuntimeException(e);
       }
@@ -211,7 +216,7 @@ public class Lab1 {
       try {
         tsi.setSpeed(id, 0);
         flipDirection();
-        Thread.sleep(Math.abs(1000 + 20 * speed));
+        Thread.sleep(Math.abs(1000 + 20*Math.abs(speed)));
         reverseSpeed();
       } catch (CommandException e) {
         throw new RuntimeException(e);
@@ -227,7 +232,6 @@ public class Lab1 {
           SensorEvent sensorEvent = tsi.getSensor(id);
           Point sensorPoint = new Point(sensorEvent.getXpos(), sensorEvent.getYpos());
           System.out.println(holding.size());
-          System.out.println(currentDir);
           if (sensorEvent.getStatus() == SensorEvent.ACTIVE){
             reachedStation(sensorPoint);
             acquireSection(sensorPoint);
@@ -238,20 +242,17 @@ public class Lab1 {
       }
     }
 
-    private void acquireSection(Point point) throws InterruptedException {
+    private void acquireSection(Point point) throws InterruptedException, CommandException {
       Semaphore tempSem = semaMap.get(point);
       if(tempSem == null){
         return;
       }
 
       if(holding.contains(tempSem)){
-        if(stationAPositions.contains(point) || stationBPositions.contains(point)){
-          return;
+        if(!stationAPositions.contains(point) || !stationBPositions.contains(point)){
+          holding.remove(holding.indexOf(tempSem));
+          tempSem.release();
         }
-        System.out.println("removed");
-
-        holding.remove(holding.indexOf(tempSem));
-        tempSem.release();
       } else {
         stopTrain();
 
@@ -265,7 +266,7 @@ public class Lab1 {
             changeTrack(point,false);
           }
         }
-        incSpeed();
+        tsi.setSpeed(id, Math.min(speed, maxSpeed));
         holding.add(tempSem);
       }
     }
