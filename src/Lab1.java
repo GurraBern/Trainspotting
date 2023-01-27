@@ -71,14 +71,11 @@ public class Lab1 {
     semaMap.put(new Point(14,11), semBottomUpper);//Claim
     semaMap.put(new Point(1,10), semBottomUpper);//Unclaim
 
-    //underSemMap.put(new Point(1,10), true);//Claim
     underSemMap.put(new Point(18,9), true);//Unclaim
     underSemMap.put(new Point(1,9), true);//Claim
 
-
     semaMap.put(new Point(1,9), semMiddle);//Claim
     semaMap.put(new Point(18,9), semMiddle);//Unclaim
-
 
     semaMap.put(new Point(6,11), semMiddleLeft);//Claim
     semaMap.put(new Point(6,9), semMiddleLeft);//Unclaim
@@ -112,8 +109,6 @@ public class Lab1 {
     switchMap.put(new Point(1,10), new Point(3,11));
     switchMap.put(new Point(6,11), new Point(3,11));
     switchMap.put(new Point(4,13), new Point(3,11));
-    //switchMap.put(new Point(6,11), new Point(3,11));
-
 
     switchMap.put(new Point(19,8), new Point(17,7));
   }
@@ -145,11 +140,10 @@ public class Lab1 {
     }
 
     private void flipDirection(){
-      if(currentDir == Direction.ToA){
+      if(currentDir == Direction.ToA)
         currentDir = Direction.ToB;
-      } else {
+      else
         currentDir = Direction.ToA;
-      }
     }
 
     private void changeTrack(Point point, boolean taken){
@@ -249,7 +243,7 @@ public class Lab1 {
       }
 
       if(holding.contains(tempSem)){
-        if(!stationAPositions.contains(point) || !stationBPositions.contains(point)){
+        if(!stationAPositions.contains(point) & !stationBPositions.contains(point)){
           holding.remove(holding.indexOf(tempSem));
           tempSem.release();
         }
