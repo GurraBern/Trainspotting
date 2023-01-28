@@ -3,7 +3,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 import static TSim.TSimInterface.SWITCH_LEFT;
 import static TSim.TSimInterface.SWITCH_RIGHT;
@@ -31,8 +30,8 @@ public class Lab1 {
     loadSwitchDirections();
     loadStations();
     loadActivationDirection();
-    Train t1 = new Train(1, 5, Direction.ToB);
-    Train t2 = new Train(2,  15, Direction.ToA);
+    Train t1 = new Train(1, speed1, Direction.ToB);
+    Train t2 = new Train(2,  speed2, Direction.ToA);
     Thread thread1 = new Thread(t1);
     Thread thread2 = new Thread(t2);
     thread1.start();
@@ -61,8 +60,6 @@ public class Lab1 {
     switchDirectionsToB.put(new Point(6,10), SWITCH_RIGHT);
     switchDirectionsToB.put(new Point(1,11), SWITCH_LEFT);
     switchDirectionsToB.put(new Point(6,9), SWITCH_LEFT);
-
-    //TAKEN
     switchDirectionsTaken.put(new Point(1,11), SWITCH_RIGHT);
     switchDirectionsTaken.put(new Point(1,9), SWITCH_RIGHT);
     switchDirectionsTaken.put(new Point(19,8), SWITCH_LEFT);
@@ -77,8 +74,6 @@ public class Lab1 {
     semaMap.put(new Point(1,11), semaphores[0]);//0 semBottomUpper
     semaMap.put(new Point(1,9), semaphores[1]);//1 semMiddle
     semaMap.put(new Point(18,9), semaphores[1]);//1 semMiddle
-    underSemMap.put(new Point(1,9), true);
-    underSemMap.put(new Point(18,9), true);
     semaMap.put(new Point(6,11), semaphores[2]);//2 semMiddleLeft
     semaMap.put(new Point(6,9), semaphores[2]);//2 semMiddleLeft
     semaMap.put(new Point(6,10), semaphores[2]);//2 semMiddleLeft
@@ -93,8 +88,10 @@ public class Lab1 {
     semaMap.put(new Point(6,7), semaphores[4]);//4 semUpperLeft
     semaMap.put(new Point(19,8), semaphores[5]);//5 semUpperAbove
     semaMap.put(new Point(14,3), semaphores[5]);//5 semUpperAbove
-    underSemMap.put(new Point(19,8), true);
-    underSemMap.put(new Point(1,11), true);
+    underSemMap.put(new Point(1,9), true); //Under middle track
+    underSemMap.put(new Point(18,9), true); //Under middle track
+    underSemMap.put(new Point(19,8), true); //Under upper track
+    underSemMap.put(new Point(1,11), true); //Under upper track
   }
 
   private void loadSwitches(){
@@ -146,69 +143,45 @@ public class Lab1 {
         currentDir = Direction.ToA;
     }
 
-    //TODO remove taken boolean?
-    private void changeTrack(Point point, boolean taken){
-      try{
-        Integer switchDirection = null;
-        var switchPosition = switchMap.get(point);
+    private void changeTrack(Point point, boolean taken) throws CommandException {
+      Integer switchDirection;
+      var switchPosition = switchMap.get(point);
+      if(switchPosition == null)
+        return;
 
-        if (taken){
-          switchDirection = switchDirectionsTaken.get(point);
-        }else{
-          if(currentDir == Direction.ToA){
-            switchDirection = switchDirectionsToA.get(point);
-          } else if(currentDir == Direction.ToB){
-            switchDirection = switchDirectionsToB.get(point);
-          }
-        }
-
-        if(switchPosition == null || switchDirection == null){
-          return;
-        }
-
-        tsi.setSwitch(switchPosition.x,switchPosition.y, switchDirection);
-      } catch (CommandException e) {
-        throw new RuntimeException(e);
+      if(taken){
+        switchDirection = switchDirectionsTaken.get(point);
+      } else if(currentDir == Direction.ToA) {
+        switchDirection = switchDirectionsToA.get(point);
+      } else if(currentDir == Direction.ToB){
+        switchDirection = switchDirectionsToB.get(point);
+      } else {
+        return;
       }
+      tsi.setSwitch(switchPosition.x, switchPosition.y, switchDirection);
     }
 
-    private void reroute(Point point){
-
+    private void reverseSpeed() throws CommandException {
+      speed = -speed;
+      tsi.setSpeed(id, speed);
     }
 
-    private void reverseSpeed() {
-      try {
-        speed = -speed;
-        tsi.setSpeed(id, speed);
-      } catch (CommandException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public void stopTrain() {
-      try {
-        tsi.setSpeed(id, 0);
-      } catch (CommandException e) {
-        throw new RuntimeException(e);
-      }
+    public void stopTrain() throws CommandException {
+      tsi.setSpeed(id, 0);
     }
 
     //TODO change so that stationPosition is only used
-    private void reachedStation(Point point){
+    private void reachedStation(Point point) throws CommandException, InterruptedException {
       if(currentDir == Direction.ToA & stationAPositions.contains(point) || currentDir == Direction.ToB & stationBPositions.contains(point)){
         turnAround();
       }
     }
 
-    public void turnAround() {
-      try {
-        tsi.setSpeed(id, 0);
-        flipDirection();
-        Thread.sleep(Math.abs(1000 + 20*Math.abs(speed)));
-        reverseSpeed();
-      } catch (CommandException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+    public void turnAround() throws CommandException, InterruptedException {
+      tsi.setSpeed(id, 0);
+      flipDirection();
+      Thread.sleep(Math.abs(1000 + 20*Math.abs(speed)));
+      reverseSpeed();
     }
 
     @Override
@@ -227,6 +200,8 @@ public class Lab1 {
       }
     }
 
+
+    //TODO går det att få finare?
     private void acquireSection(Point point) throws InterruptedException, CommandException {
       Semaphore tempSem = semaMap.get(point);
       if(tempSem == null){
