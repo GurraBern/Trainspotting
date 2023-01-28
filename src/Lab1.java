@@ -14,6 +14,7 @@ public class Lab1 {
   private Map<Point,Point> switchMap = new HashMap<>();
   private HashMap<Point, Integer> switchDirectionsToA = new HashMap<>();
   private HashMap<Point, Integer> switchDirectionsToB = new HashMap<>();
+  private HashMap<Point, Integer> switchDirectionsTaken = new HashMap<>();
   private HashMap<Point, Direction> activationDirection = new HashMap<>();
   private final HashSet<Point> stationAPositions = new HashSet<>();
   private final HashSet<Point> stationBPositions = new HashSet<>();
@@ -58,6 +59,10 @@ public class Lab1 {
 
     //switchDirectionsToA.put(new Point(1,11), SWITCH_RIGHT);       //gör en taken map istället!!! 1,11 triggas när man ska iväg så att tåget står på rälsen exception!!
     switchDirectionsToB.put(new Point(1,11), SWITCH_LEFT);
+
+    //TAKEN
+    switchDirectionsTaken.put(new Point(1,11), SWITCH_RIGHT);
+
 
     switchDirectionsToA.put(new Point(6,11), SWITCH_LEFT);
     switchDirectionsToB.put(new Point(6,11), SWITCH_RIGHT);
