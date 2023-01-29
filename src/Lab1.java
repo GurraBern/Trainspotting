@@ -30,8 +30,8 @@ public class Lab1 {
     loadSwitchDirections();
     loadStations();
     loadActivationDirection();
-    Train t1 = new Train(1, speed1, Direction.ToB);
-    Train t2 = new Train(2,  speed2, Direction.ToA);
+    Train t1 = new Train(1, 20, Direction.ToB);
+    Train t2 = new Train(2,  7, Direction.ToA);
     Thread thread1 = new Thread(t1);
     Thread thread2 = new Thread(t2);
     thread1.start();
@@ -45,21 +45,30 @@ public class Lab1 {
     activationDirection.put(new Point(14,13), Direction.ToB);
     activationDirection.put(new Point(1,11), Direction.ToB);
     activationDirection.put(new Point(14,11), Direction.ToA);
+
+    activationDirection.put(new Point(9,5), Direction.ToB);
+    activationDirection.put(new Point(11,8), Direction.ToA);
+
+
+    activationDirection.put(new Point(11,7), Direction.ToA);
+    activationDirection.put(new Point(6,6), Direction.ToB);
+
+
   }
 
   private void loadSwitchDirections() {
-    switchDirectionsToA.put(new Point(13,9), SWITCH_RIGHT);
+    switchDirectionsToA.put(new Point(12,9), SWITCH_RIGHT);
     switchDirectionsToA.put(new Point(6,11), SWITCH_LEFT);
     switchDirectionsToA.put(new Point(1,9), SWITCH_LEFT);
     switchDirectionsToA.put(new Point(19,8), SWITCH_RIGHT);
-    switchDirectionsToA.put(new Point(13,10), SWITCH_LEFT);
+    switchDirectionsToA.put(new Point(12,10), SWITCH_LEFT);
     switchDirectionsToA.put(new Point(4,13), SWITCH_RIGHT);
     switchDirectionsToB.put(new Point(18,9), SWITCH_RIGHT);
-    switchDirectionsToB.put(new Point(15,7), SWITCH_RIGHT);
-    switchDirectionsToB.put(new Point(15,8), SWITCH_LEFT);
-    switchDirectionsToB.put(new Point(6,10), SWITCH_RIGHT);
+    switchDirectionsToB.put(new Point(14,7), SWITCH_RIGHT);
+    switchDirectionsToB.put(new Point(14,8), SWITCH_LEFT);
+    switchDirectionsToB.put(new Point(7,10), SWITCH_RIGHT);
     switchDirectionsToB.put(new Point(1,11), SWITCH_LEFT);
-    switchDirectionsToB.put(new Point(6,9), SWITCH_LEFT);
+    switchDirectionsToB.put(new Point(7,9), SWITCH_LEFT);
     switchDirectionsTaken.put(new Point(1,11), SWITCH_RIGHT);
     switchDirectionsTaken.put(new Point(1,9), SWITCH_RIGHT);
     switchDirectionsTaken.put(new Point(19,8), SWITCH_LEFT);
@@ -75,17 +84,17 @@ public class Lab1 {
     semaMap.put(new Point(1,9), semaphores[1]);//1 semMiddle
     semaMap.put(new Point(18,9), semaphores[1]);//1 semMiddle
     semaMap.put(new Point(6,11), semaphores[2]);//2 semMiddleLeft
-    semaMap.put(new Point(6,9), semaphores[2]);//2 semMiddleLeft
-    semaMap.put(new Point(6,10), semaphores[2]);//2 semMiddleLeft
+    semaMap.put(new Point(7,9), semaphores[2]);//2 semMiddleLeft
+    semaMap.put(new Point(7,10), semaphores[2]);//2 semMiddleLeft
     semaMap.put(new Point(4,13), semaphores[2]);//2 semMiddleLeft
-    semaMap.put(new Point(13,10), semaphores[3]);//3 semUpperRight
-    semaMap.put(new Point(13,9), semaphores[3]);//3 semUpperRight
-    semaMap.put(new Point(15,8), semaphores[3]);//3 semUpperRight
-    semaMap.put(new Point(15,7), semaphores[3]);//3 semUpperRight
-    semaMap.put(new Point(10,8), semaphores[4]);//4 semUpperLeft
-    semaMap.put(new Point(8,5), semaphores[4]);//4 semUpperLeft
-    semaMap.put(new Point(10,7), semaphores[4]);//4 semUpperLeft
-    semaMap.put(new Point(6,7), semaphores[4]);//4 semUpperLeft
+    semaMap.put(new Point(12,10), semaphores[3]);//3 semUpperRight
+    semaMap.put(new Point(12,9), semaphores[3]);//3 semUpperRight
+    semaMap.put(new Point(14,8), semaphores[3]);//3 semUpperRight
+    semaMap.put(new Point(14,7), semaphores[3]);//3 semUpperRight
+    semaMap.put(new Point(11,8), semaphores[4]);//4 semUpperLeft
+    semaMap.put(new Point(9,5), semaphores[4]);//4 semUpperLeft
+    semaMap.put(new Point(11,7), semaphores[4]);//4 semUpperLeft
+    semaMap.put(new Point(6,6), semaphores[4]);//4 semUpperLeft
     semaMap.put(new Point(19,8), semaphores[5]);//5 semUpperAbove
     semaMap.put(new Point(14,3), semaphores[5]);//5 semUpperAbove
     underSemMap.put(new Point(1,9), true); //Under middle track
@@ -95,15 +104,15 @@ public class Lab1 {
   }
 
   private void loadSwitches(){
-    switchMap.put(new Point(13,9), new Point(15,9));
+    switchMap.put(new Point(12,9), new Point(15,9));
     switchMap.put(new Point(18,9), new Point(15,9));
-    switchMap.put(new Point(13,10), new Point(15,9));
-    switchMap.put(new Point(15,7), new Point(17,7));
-    switchMap.put(new Point(15,8), new Point(17,7));
+    switchMap.put(new Point(12,10), new Point(15,9));
+    switchMap.put(new Point(14,7), new Point(17,7));
+    switchMap.put(new Point(14,8), new Point(17,7));
     switchMap.put(new Point(19,8), new Point(17,7));
-    switchMap.put(new Point(6,10), new Point(4,9));
+    switchMap.put(new Point(7,10), new Point(4,9));
     switchMap.put(new Point(1,9), new Point(4,9));
-    switchMap.put(new Point(6,9), new Point(4,9));
+    switchMap.put(new Point(7,9), new Point(4,9));
     switchMap.put(new Point(1,11), new Point(3,11));
     switchMap.put(new Point(6,11), new Point(3,11));
     switchMap.put(new Point(4,13), new Point(3,11));
