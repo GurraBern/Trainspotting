@@ -45,15 +45,10 @@ public class Lab1 {
     activationDirection.put(new Point(14,13), Direction.ToB);
     activationDirection.put(new Point(1,11), Direction.ToB);
     activationDirection.put(new Point(14,11), Direction.ToA);
-
     activationDirection.put(new Point(9,5), Direction.ToB);
     activationDirection.put(new Point(11,8), Direction.ToA);
-
-
     activationDirection.put(new Point(11,7), Direction.ToA);
     activationDirection.put(new Point(6,6), Direction.ToB);
-
-
   }
 
   private void loadSwitchDirections() {
@@ -179,7 +174,6 @@ public class Lab1 {
       tsi.setSpeed(id, 0);
     }
 
-    //TODO change so that stationPosition is only used
     private void reachedStation(Point point) throws CommandException, InterruptedException {
       if(currentDir == Direction.ToA & stationAPositions.contains(point) || currentDir == Direction.ToB & stationBPositions.contains(point)){
         turnAround();
@@ -209,8 +203,6 @@ public class Lab1 {
       }
     }
 
-
-    //TODO går det att få finare?
     private void acquireSection(Point point) throws InterruptedException, CommandException {
       Semaphore tempSem = semaMap.get(point);
       if(tempSem == null){
