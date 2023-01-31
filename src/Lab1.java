@@ -30,7 +30,7 @@ public class Lab1 {
     loadSwitchDirections();
     loadStations();
     loadActivationDirection();
-    Train t1 = new Train(1, 50, Direction.ToB, semaphores[5]);
+    Train t1 = new Train(1, speed1, Direction.ToB, semaphores[5]);
     Train t2 = new Train(2,  speed2, Direction.ToA, semaphores[0]);
     Thread thread1 = new Thread(t1);
     Thread thread2 = new Thread(t2);
