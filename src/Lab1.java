@@ -30,7 +30,7 @@ public class Lab1 {
     loadSwitchDirections();
     loadStations();
     loadActivationDirection();
-    Train t1 = new Train(1, speed1, Direction.ToB, semaphores[5]);
+    Train t1 = new Train(1, 50, Direction.ToB, semaphores[5]);
     Train t2 = new Train(2,  speed2, Direction.ToA, semaphores[0]);
     Thread thread1 = new Thread(t1);
     Thread thread2 = new Thread(t2);
@@ -126,7 +126,7 @@ public class Lab1 {
   public class Train implements Runnable {
     private int id;
     private int speed;
-    private final int maxSpeed = 20;
+    private final int maxSpeed = 22;
     private TSimInterface tsi;
     public ArrayList<Semaphore> holding = new ArrayList();
     private Direction currentDirection;
@@ -135,7 +135,7 @@ public class Lab1 {
     //startingSemaphore needs to be specified to acquire the first semaphore at the station section.
     public Train(int id, int speed, Direction direction, Semaphore startingSemaphore) {
       this.id = id;
-      this.speed = speed;
+      this.speed = Math.min(speed, maxSpeed);
       this.currentDirection = direction;
       this.tsi = TSimInterface.getInstance();
       try{
