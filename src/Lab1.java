@@ -30,27 +30,27 @@ public class Lab1 {
     loadSwitchDirections();
     loadStations();
     loadActivationDirection();
-    Train t1 = new Train(1, 20, Direction.ToB);
-    Train t2 = new Train(2,  7, Direction.ToA);
+    Train t1 = new Train(1, speed1, Direction.ToB, semaphores[5]);
+    Train t2 = new Train(2,  speed2, Direction.ToA, semaphores[0]);
     Thread thread1 = new Thread(t1);
     Thread thread2 = new Thread(t2);
     thread1.start();
     thread2.start();
   }
 
+  //This method maps a Point (sensor position) to a Direction, the sensors in this map only try to acquire the semaphore if
+  //the train is moving in the specified direction.
   private void loadActivationDirection(){
     activationDirection.put(new Point(1,9), Direction.ToA);
     activationDirection.put(new Point(18,9), Direction.ToB);
     activationDirection.put(new Point(19,8), Direction.ToA);
     activationDirection.put(new Point(14,13), Direction.ToB);
     activationDirection.put(new Point(1,11), Direction.ToB);
-    activationDirection.put(new Point(14,11), Direction.ToA);
-    activationDirection.put(new Point(9,5), Direction.ToB);
-    activationDirection.put(new Point(11,8), Direction.ToA);
-    activationDirection.put(new Point(11,7), Direction.ToA);
-    activationDirection.put(new Point(6,6), Direction.ToB);
   }
 
+  //This method maps a Point (sensor position) to a SwitchDirection depending on which direction the
+  //train is traveling and activating the sensor. This is used to tell the switch which direction it should turn
+  // depending on the sensor.
   private void loadSwitchDirections() {
     switchDirectionsToA.put(new Point(12,9), SWITCH_RIGHT);
     switchDirectionsToA.put(new Point(6,11), SWITCH_LEFT);
@@ -69,12 +69,14 @@ public class Lab1 {
     switchDirectionsTaken.put(new Point(19,8), SWITCH_LEFT);
     switchDirectionsTaken.put(new Point(18,9), SWITCH_LEFT);
   }
+
+  //This method creates all the semaphores then maps a Point (sensor position) to a specific semaphore. This makes it
+  //possible to acquire or release semaphores by activating the specified sensor position.
   private void loadSemaphores(){
     for(int i = 0; i < semaphores.length; i++){
       semaphores[i] =new Semaphore(1);
     }
 
-    semaMap.put(new Point(14,11), semaphores[0]);//0 semBottomUpper
     semaMap.put(new Point(1,11), semaphores[0]);//0 semBottomUpper
     semaMap.put(new Point(1,9), semaphores[1]);//1 semMiddle
     semaMap.put(new Point(18,9), semaphores[1]);//1 semMiddle
@@ -91,13 +93,13 @@ public class Lab1 {
     semaMap.put(new Point(11,7), semaphores[4]);//4 semUpperLeft
     semaMap.put(new Point(6,6), semaphores[4]);//4 semUpperLeft
     semaMap.put(new Point(19,8), semaphores[5]);//5 semUpperAbove
-    semaMap.put(new Point(14,3), semaphores[5]);//5 semUpperAbove
     underSemMap.put(new Point(1,9), true); //Under middle track
     underSemMap.put(new Point(18,9), true); //Under middle track
     underSemMap.put(new Point(19,8), true); //Under upper track
     underSemMap.put(new Point(1,11), true); //Under upper track
   }
 
+  //This method maps a Point(sensor position) to a Point(switch position), this allows the sensors which switch to change direciton of.
   private void loadSwitches(){
     switchMap.put(new Point(12,9), new Point(15,9));
     switchMap.put(new Point(18,9), new Point(15,9));
@@ -113,6 +115,7 @@ public class Lab1 {
     switchMap.put(new Point(4,13), new Point(3,11));
   }
 
+  //This method adds all sensors which are supposed to act as stations.
   private void loadStations(){
     stationAPositions.add(new Point(14,5));
     stationAPositions.add(new Point(14,3));
@@ -126,13 +129,21 @@ public class Lab1 {
     private final int maxSpeed = 20;
     private TSimInterface tsi;
     public ArrayList<Semaphore> holding = new ArrayList();
-    private Direction currentDir;
+    private Direction currentDirection;
 
-    public Train(int id, int speed, Direction direction) {
+    //The train class takes the parameters id and speed of the train, which direction the train is travelling(to station A or to station B),
+    //startingSemaphore needs to be specified to acquire the first semaphore at the station section.
+    public Train(int id, int speed, Direction direction, Semaphore startingSemaphore) {
       this.id = id;
       this.speed = speed;
-      this.currentDir = direction;
+      this.currentDirection = direction;
       this.tsi = TSimInterface.getInstance();
+      try{
+        startingSemaphore.acquire();
+        holding.add(startingSemaphore);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
       try{
         tsi.setSpeed(id, Math.min(speed, maxSpeed));
       } catch (CommandException e) {
@@ -141,12 +152,14 @@ public class Lab1 {
     }
 
     private void flipDirection(){
-      if(currentDir == Direction.ToA)
-        currentDir = Direction.ToB;
+      if(currentDirection == Direction.ToA)
+        currentDirection = Direction.ToB;
       else
-        currentDir = Direction.ToA;
+        currentDirection = Direction.ToA;
     }
 
+    //This method changes the direction of a switch depending on the direction of the train. This method also takes a
+    //boolean taken which is used to change the switch to cause the train to take a railway underneath the track.
     private void changeTrack(Point point, boolean taken) throws CommandException {
       Integer switchDirection;
       var switchPosition = switchMap.get(point);
@@ -155,9 +168,9 @@ public class Lab1 {
 
       if(taken){
         switchDirection = switchDirectionsTaken.get(point);
-      } else if(currentDir == Direction.ToA) {
+      } else if(currentDirection == Direction.ToA) {
         switchDirection = switchDirectionsToA.get(point);
-      } else if(currentDir == Direction.ToB){
+      } else if(currentDirection == Direction.ToB){
         switchDirection = switchDirectionsToB.get(point);
       } else {
         return;
@@ -174,8 +187,9 @@ public class Lab1 {
       tsi.setSpeed(id, 0);
     }
 
+    //This method checks if the sensor we hit is a sensor at one of the stations and if so causing the train to turn around.
     private void reachedStation(Point point) throws CommandException, InterruptedException {
-      if(currentDir == Direction.ToA & stationAPositions.contains(point) || currentDir == Direction.ToB & stationBPositions.contains(point)){
+      if(currentDirection == Direction.ToA & stationAPositions.contains(point) || currentDirection == Direction.ToB & stationBPositions.contains(point)){
         turnAround();
       }
     }
@@ -187,6 +201,7 @@ public class Lab1 {
       reverseSpeed();
     }
 
+    //This method checks whether the sensor we activated reached a station and if the train should try to acquire a section of the track.
     @Override
     public void run() {
       try {
@@ -203,6 +218,9 @@ public class Lab1 {
       }
     }
 
+    //This method checks if the sensor the train activated has a semaphore connected to it, if so it will check if it should
+    //release the semaphore if we are already holding the same semaphore. Otherwise, it should try to acquire the semaphore resulting in
+    //acquiring the semaphore proceeding on the track as normal or to go underneath the track if such a section exists.
     private void acquireSection(Point point) throws InterruptedException, CommandException {
       Semaphore tempSem = semaMap.get(point);
       if(tempSem == null){
@@ -215,7 +233,7 @@ public class Lab1 {
           tempSem.release();
         }
       } else {
-        if(!activationDirection.containsKey(point) || activationDirection.containsKey(point) && activationDirection.get(point).equals(currentDir)){
+        if(!activationDirection.containsKey(point) || activationDirection.containsKey(point) && activationDirection.get(point).equals(currentDirection)){
            stopTrain();
           if(tempSem.tryAcquire()){
             changeTrack(point, false);
